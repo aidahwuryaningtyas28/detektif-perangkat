@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Detektif Perangkat AR: Komputer Kasir Toko Bu Sari</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f8fb;--ink:#14293d;--card:#fff;--line:#d3e0ea;--s1:#cfeaf7;--s2:#eaf6fb;--in:#2f78e0;--pr:#7c4dde;--out:#d9602a;--st:#12957a;--bad:#d23b40;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1b27;--ink:#e8f1f8;--card:#172737;--line:#2a4054;--s1:#1b3a50;--s2:#12283a}}
+:root[data-theme="dark"]{--bg:#0f1b27;--ink:#e8f1f8;--card:#172737;--line:#2a4054;--s1:#1b3a50;--s2:#12283a}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Nunito,system-ui,sans-serif;display:flex;flex-direction:column}
+header{padding:10px 14px 6px}
+h1{font:700 21px/1.2 'Baloo 2',system-ui,sans-serif;margin:0}
+header p{margin:0;font-size:13px;opacity:.75}
+#stage{position:relative;flex:0 0 42%;min-height:210px;background:linear-gradient(var(--s1),var(--s2));overflow:hidden}
+#stage.ar{background:#000}
+#v{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.ar #v{display:block}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#tools{position:absolute;top:8px;right:8px;display:flex;gap:8px;align-items:center}
+#tools input{width:80px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--in);outline-offset:2px}
+.btn{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700}
+.hint{position:absolute;left:10px;bottom:6px;font-size:12px;opacity:.7;pointer-events:none}
+.ar .hint{color:#fff}
+nav{display:flex;border-bottom:1px solid var(--line)}
+nav button{flex:1;background:none;border:0;border-bottom:3px solid transparent;padding:9px 4px;font-weight:700;font-size:14px}
+nav button[aria-selected=true]{border-color:var(--in)}
+main{flex:1;overflow:auto;padding:12px 14px 18px}
+section{display:none;max-width:640px;margin:0 auto}
+section.on{display:block}
+h2{font:700 19px/1.2 'Baloo 2',system-ui,sans-serif;margin:6px 0 2px}
+p{margin:4px 0 8px}
+.chip{display:inline-block;color:#fff;border-radius:6px;padding:1px 9px;font-size:13px;font-weight:700}
+#info{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:96px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:10px;padding:10px 6px;font-weight:700}
+.card.sel{border-color:var(--in);transform:translateY(-2px)}
+.card:disabled{color:#fff;border-color:transparent;cursor:default}
+#fb{min-height:48px;margin-top:10px;font-weight:700}
+.sw{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px}
+.sw input{width:22px;height:22px}
+#res{background:var(--card);border-left:5px solid var(--st);border-radius:8px;padding:8px 12px}
+#res.warn{border-color:var(--bad)}
+#res p{margin:3px 0}
+</style></head><body>
+<header><h1>Detektif Perangkat AR</h1><p>Komputer kasir Toko Bu Sari · LKPD Informatika kelas VII</p></header>
+<div id="stage"><video id="v" playsinline muted></video><canvas id="cv" aria-label="Model 3D komputer kasir"></canvas>
+<div id="tools"><input id="sz" type="range" min=".5" max="1.4" step=".05" value="1" aria-label="Ukuran model"><button class="btn" id="camb">Mode kamera</button></div>
+<div class="hint">Geser untuk memutar, ketuk perangkat untuk detail</div></div>
+<nav role="tablist"><button role="tab" aria-selected="true" data-t="0">Jelajahi</button><button role="tab" aria-selected="false" data-t="1">Kartu Detektif</button><button role="tab" aria-selected="false" data-t="2">Uji Coba</button></nav>
+<main>
+<section class="on"><div id="info"><p>Ketuk salah satu perangkat pada model 3D untuk melihat kategori dan kegunaannya. Komputer di sebelah kiri dibuat tembus pandang agar isinya terlihat.</p></div>
+<div class="row"><button class="btn" id="flow">Putar alur kerja kasir</button></div>
+<p style="font-size:14px;opacity:.8;margin-top:12px">Gunakan alur ini untuk menyusun bagan Input, Proses, Output, Penyimpanan pada LKPD B2.</p></section>
+<section><p>Pilih sebuah kartu, lalu pilih kategorinya. Ada kartu penyusup yang bukan perangkat keras.</p>
+<div id="grid"></div><div class="row" id="bk"></div><div id="fb" aria-live="polite"></div></section>
+<section><p>Matikan satu perangkat dan lihat apa yang terjadi pada komputer kasir Bu Sari. Hasilnya membantu menjawab LKPD B3.</p><div id="sws"></div><div id="res" aria-live="polite"></div></section>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),T=THREE;
+const C={in:['Input',0x2f78e0],pr:['Proses',0x7c4dde],out:['Output',0xd9602a],st:['Penyimpanan',0x12957a]};
+const P={
+keyboard:['Keyboard','in','Memasukkan huruf dan angka, misalnya kode barang atau jumlah beli.'],
+mouse:['Mouse','in','Menggerakkan penunjuk dan memilih menu di layar.'],
+barcode:['Barcode reader','in','Membaca kode batang agar nama dan harga barang muncul otomatis.'],
+mic:['Mikrofon','in','Memasukkan suara ke komputer.'],
+cpu:['Prosesor (CPU)','pr','Otak komputer yang menghitung dan mengendalikan kerja perangkat lain.'],
+ram:['RAM','pr','Menampung data dan program sementara saat komputer bekerja; hilang saat komputer mati.'],
+mobo:['Motherboard','pr','Papan utama yang menghubungkan semua komponen.'],
+psu:['Power supply','pr','Mengalirkan listrik ke seluruh komponen.'],
+monitor:['Monitor','out','Menampilkan teks dan gambar, misalnya daftar belanja dan total harga.'],
+printer:['Printer','out','Mencetak hasil ke kertas, misalnya struk belanja.'],
+speaker:['Speaker','out','Mengeluarkan suara, misalnya bunyi bip saat barang terbaca.'],
+hdd:['Harddisk / SSD','st','Menyimpan data dan program secara tetap, termasuk catatan penjualan.'],
+flash:['Flashdisk','st','Penyimpanan yang mudah dibawa, cocok untuk menyalin laporan penjualan.']};
+/* scene */
+const stage=$('#stage'),R=new T.WebGLRenderer({canvas:$('#cv'),antialias:true,alpha:true});
+R.setPixelRatio(Math.min(devicePixelRatio,2));
+const S=new T.Scene(),cam=new T.PerspectiveCamera(45,1,.1,100),G=new T.Group(),M={};
+S.add(new T.HemisphereLight(0xffffff,0x8899aa,.95));
+const dl=new T.DirectionalLight(0xffffff,.8);dl.position.set(4,8,6);S.add(dl);
+S.add(G);G.rotation.y=-.3;
+const B=(w,h,d)=>new T.BoxGeometry(w,h,d),Y=(r,h)=>new T.CylinderGeometry(r,r,h,18);
+function add(id,g,x,y,z,col,o){const m=new T.Mesh(g,new T.MeshStandardMaterial(Object.assign({color:col,roughness:.6},o||{})));
+m.position.set(x,y,z);m.userData.e=m.material.emissive.getHex();m.userData.ei=m.material.emissiveIntensity;
+if(id){m.userData.id=id;(M[id]=M[id]||[]).push(m)}G.add(m)}
+add(0,B(9,.2,4.2),0,-.1,.1,0xc9a574);
+add('monitor',B(2.4,1.4,.12),-1,1.1,-1,0x1d2733);
+add('monitor',B(2.2,1.2,.02),-1,1.1,-.93,0x7fd0ff,{emissive:0x2a6a8a,emissiveIntensity:.5});
+add('monitor',B(.2,.4,.2),-1,.22,-1,0x2b3644);add('monitor',B(.9,.05,.5),-1,.03,-1,0x2b3644);
+add('keyboard',B(2.2,.12,.7),-1,.06,.3,0x3a4a5c);add('keyboard',B(2,.05,.5),-1,.14,.3,0xdfe8f0);
+add('mouse',B(.35,.12,.55),.8,.06,.35,0xf1f5f9);
+add('barcode',B(.25,.5,.25),1.9,.25,.5,0x2b2f36);add('barcode',B(.5,.25,.25),1.9,.6,.4,0x2b2f36);add('barcode',B(.5,.04,.04),1.9,.6,.26,0xff3b30,{emissive:0xff3b30});
+add('speaker',B(.5,.8,.5),.9,.4,-1,0x39424e);add('speaker',Y(.15,.03),.9,.4,-.74,0x0d1116);
+add('printer',B(1.3,.5,.9),3,.25,-.9,0xe4e9ee);add('printer',B(.8,.02,.5),3,.56,-.9,0xffffff);
+add('mic',Y(.03,.6),2.9,.3,.9,0x2b2f36);add('mic',Y(.1,.25),2.9,.72,.9,0x555e69);
+add('flash',B(.15,.06,.4),-2.3,.03,1.2,0x12957a);add('flash',B(.12,.04,.15),-2.3,.03,.95,0xc9d1d9);
+add('mobo',B(.05,1.5,1.4),-3.62,1.2,-.9,0x1e8a5a);
+add('cpu',B(.1,.3,.3),-3.52,1.5,-.9,0xc9d1d9);
+add('ram',B(.08,.5,.08),-3.52,1.5,-.5,0x7c4dde);add('ram',B(.08,.5,.08),-3.52,1.5,-.35,0x7c4dde);
+add('hdd',B(.8,.25,.5),-3.1,.35,-.3,0x8b95a1);
+add('psu',B(.8,.5,.9),-3.1,1.95,-1.2,0x444d57);
+add(0,B(1,2.2,1.8),-3.2,1.1,-.9,0x9fc3d9,{transparent:true,opacity:.2,depthWrite:false});
+function rs(){const w=stage.clientWidth,h=stage.clientHeight;R.setSize(w,h,false);cam.aspect=w/h;
+cam.position.set(0,3.4,Math.max(9.5,11.5/cam.aspect));cam.lookAt(0,.9,0);cam.updateProjectionMatrix()}
+new ResizeObserver(rs).observe(stage);
+R.setAnimationLoop(()=>R.render(S,cam));
+/* highlight + info */
+let cur=[],run=0;
+function hl(ids,on){ids.forEach(i=>(M[i]||[]).forEach(m=>{m.material.emissive.setHex(on?C[P[i][1]][1]:m.userData.e);m.material.emissiveIntensity=on?.7:m.userData.ei}))}
+const info=h=>$('#info').innerHTML=h;
+function show(id){run++;hl(cur,0);cur=[id];hl(cur,1);const p=P[id];
+info(`<span class="chip" style="background:var(--${p[1]})">${C[p[1]][0]}</span><h2>${p[0]}</h2><p>${p[2]}</p>`)}
+$('#flow').onclick=async()=>{const k=++run,st=[[['barcode'],'Input','Kasir memindai barang. Barcode reader membaca kode batang.'],
+[['cpu','ram'],'Proses','Prosesor mencari harga dan menghitung total, RAM menampung datanya sementara.'],
+[['monitor','printer'],'Output','Monitor menampilkan total belanja dan printer mencetak struk.'],
+[['hdd'],'Penyimpanan','Harddisk menyimpan catatan penjualan agar tidak hilang.']];
+for(const[s,n,t]of st){if(k!=run)return;hl(cur,0);cur=s;hl(cur,1);info(`<h2>${n}</h2><p>${t}</p>`);await new Promise(r=>setTimeout(r,2600))}
+hl(cur,0);cur=[];info('<p>Alur selesai: input, proses, output, lalu penyimpanan menjaga data tetap aman. Ketuk perangkat untuk mempelajarinya.</p>')};
+/* drag + pick */
+const cv=$('#cv'),rc=new T.Raycaster();let d=null;
+cv.onpointerdown=e=>{d={x:e.clientX,y:e.clientY,m:0};cv.setPointerCapture(e.pointerId)};
+cv.onpointermove=e=>{if(!d)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;d.m+=Math.abs(dx)+Math.abs(dy);d.x=e.clientX;d.y=e.clientY;
+G.rotation.y+=dx*.01;G.rotation.x=Math.max(-.3,Math.min(.5,G.rotation.x+dy*.005))};
+cv.onpointerup=e=>{if(d&&d.m<6){const r=cv.getBoundingClientRect();
+rc.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-((e.clientY-r.top)/r.height)*2+1},cam);
+const h=rc.intersectObjects(G.children).find(i=>i.object.userData.id&&i.object.visible);if(h)show(h.object.userData.id)}d=null};
+$('#sz').oninput=e=>G.scale.setScalar(+e.target.value);
+/* camera */
+const vid=$('#v'),cb=$('#camb');
+cb.onclick=async()=>{if(vid.srcObject){vid.srcObject.getTracks().forEach(t=>t.stop());vid.srcObject=null;stage.classList.remove('ar');cb.textContent='Mode kamera';return}
+try{vid.srcObject=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});await vid.play();stage.classList.add('ar');cb.textContent='Tutup kamera'}
+catch(e){info('<p>Kamera tidak dapat dibuka. Izinkan akses kamera pada peramban, atau buka halaman ini langsung di Chrome.</p>')}};
+/* tabs */
+const tb=[...document.querySelectorAll('nav button')],sc=[...document.querySelectorAll('section')];
+tb.forEach((b,i)=>b.onclick=()=>{tb.forEach((x,j)=>{x.setAttribute('aria-selected',i==j);sc[j].classList.toggle('on',i==j)})});
+/* kartu detektif */
+const K=[['Keyboard','in','keyboard'],['Mouse','in','mouse'],['Scanner','in',0,'Memindai dokumen menjadi data digital.'],['Mikrofon','in','mic'],['Barcode reader','in','barcode'],
+['Prosesor (CPU)','pr','cpu'],['RAM','pr','ram'],['Motherboard','pr','mobo'],['Monitor','out','monitor'],['Printer','out','printer'],['Speaker','out','speaker'],
+['Harddisk (HDD)','st','hdd'],['SSD','st','hdd'],['Flashdisk','st','flash'],
+['Microsoft Word','x',0,'Program pengolah kata adalah perangkat lunak, bukan perangkat keras.'],['Windows','x',0,'Sistem operasi adalah perangkat lunak, bukan perangkat keras.']];
+let sel=null,ok=0;const fb=t=>$('#fb').textContent=t;
+K.forEach((k,i)=>{const b=document.createElement('button');b.className='card';b.textContent=k[0];
+b.onclick=()=>{if(b.disabled)return;if(sel)sel.b.classList.remove('sel');sel=k;b.classList.add('sel');fb('Kartu '+k[0]+' masuk kategori apa?')};k.b=b;$('#grid').append(b)});
+[['in','Input'],['pr','Proses'],['out','Output'],['st','Penyimpanan'],['x','Penyusup']].forEach(([c,n])=>{const b=document.createElement('button');b.className='btn';b.textContent=n;
+b.onclick=()=>{if(!sel){fb('Pilih sebuah kartu dulu.');return}const k=sel;
+if(k[1]!=c){fb('Belum tepat. Pikirkan lagi apa tugas '+k[0]+' pada komputer.');return}
+k.b.disabled=true;k.b.classList.remove('sel');k.b.style.background=c=='x'?'var(--bad)':`var(--${c})`;sel=null;ok++;
+fb((k[3]||P[k[2]][2])+(ok==16?' Semua kartu selesai! Penyusupnya Microsoft Word dan Windows, karena keduanya perangkat lunak.':' Benar!'));
+if(k[2])show(k[2])};$('#bk').append(b)});
+/* uji coba */
+const U=[['Prosesor (CPU)','cpu','Tanpa prosesor, tidak ada yang menghitung dan mengendalikan perangkat lain, sehingga komputer tidak bisa bekerja.'],
+['RAM','ram','Tanpa RAM, data dan program tidak punya tempat sementara saat bekerja, sehingga program kasir tidak bisa berjalan.'],
+['Monitor (perangkat output)','monitor','Tanpa output, komputer tetap menghitung, tetapi kasir tidak dapat melihat total belanja.'],
+['Harddisk / SSD','hdd','Tanpa penyimpanan, program dan catatan penjualan tidak bisa disimpan dan data hilang saat komputer dimatikan.'],
+['Input (keyboard dan barcode)','keyboard,barcode','Tanpa input, kasir tidak bisa memasukkan kode atau jumlah barang.']];
+const off=new Set();
+function upd(){const r=$('#res');r.className=off.size?'warn':'';
+r.innerHTML=off.size?U.filter(u=>off.has(u[1])).map(u=>`<p><b>${u[0]}:</b> ${u[2]}</p>`).join(''):'<p>Semua perangkat lengkap. Komputer kasir siap melayani pembeli.</p>'}
+U.forEach(u=>{const l=document.createElement('label');l.className='sw';l.innerHTML=`<input type="checkbox" checked><span>${u[0]}</span>`;
+l.firstChild.onchange=e=>{const on=e.target.checked;on?off.delete(u[1]):off.add(u[1]);u[1].split(',').forEach(i=>M[i].forEach(m=>m.visible=on));upd()};$('#sws').append(l)});
+upd();rs();
+</script></body></html>
